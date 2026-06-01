@@ -92,15 +92,15 @@ const Sidebar = () => {
       <div className="p-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <img
-            src="/agentland-logo.jpeg"
-            alt="Agentland"
+            src="/langtrail-logo.jpeg"
+            alt="LangTrail"
             className={`h-8 w-8 rounded-lg object-cover logo-themed${darkMode ? ' logo-dark' : ''}`}
           />
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900">
-              Agentland<span className="text-primary">.</span>
+              LangTrail<span className="text-primary">.</span>
             </h1>
-            <p className="text-[10px] text-slate-400 font-medium -mt-0.5">AI OSS</p>
+            <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Agent Evals</p>
           </div>
         </div>
       </div>
@@ -149,7 +149,7 @@ const Header = () => {
       style={darkMode ? { backgroundColor: 'rgba(22,27,39,0.9)', borderColor: '#2a3347' } : {}}
     >
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-400 text-xs">AI OSS</span>
+        <span className="text-slate-400 text-xs">Agent Evals</span>
         <ChevronRight className="w-3 h-3 text-slate-300" />
         <span className="font-semibold text-slate-700">{currentPage?.name ?? 'Page'}</span>
       </div>

@@ -401,7 +401,7 @@ export default function ReviewPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'agentland-trajectory-reviews.jsonl'
+    a.download = 'langtrail-trajectory-reviews.jsonl'
     a.click()
     URL.revokeObjectURL(url)
   }

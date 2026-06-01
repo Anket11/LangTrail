@@ -1,6 +1,6 @@
-# Agentland Dashboard
+# LangTrail Dashboard
 
-A React + Vite dashboard for [Agentland](https://github.com/jaiswal-naman/agentland) — open-source AI agent observability.
+A React + Vite dashboard for [LangTrail](https://github.com/jaiswal-naman/agentland) — open-source AI agent observability.
 
 ## Pages
 
@@ -30,7 +30,7 @@ pnpm install
 pnpm dev        # starts at http://localhost:3000
 ```
 
-The Vite dev server proxies `/api`, `/health`, and `/metrics` to the Agentland API server at `http://localhost:8080`.
+The Vite dev server proxies `/api`, `/health`, and `/metrics` to the LangTrail API server at `http://localhost:8080`.
 
 Make sure the proxy is running before starting the dashboard:
 

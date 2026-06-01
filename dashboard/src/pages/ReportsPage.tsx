@@ -212,10 +212,10 @@ export default function ReportsPage() {
              (data as Record<string, unknown[]>).agents ??
              (data as Record<string, unknown[]>).by_model ??
              [data as Record<string, unknown>])
-        fileName = `agentland-${template.id}-${dateStr}.csv`
+        fileName = `langtrail-${template.id}-${dateStr}.csv`
         downloadFile(toCSV(rows as Record<string, unknown>[]), fileName, 'text/csv')
       } else {
-        fileName = `agentland-${template.id}-${dateStr}.json`
+        fileName = `langtrail-${template.id}-${dateStr}.json`
         downloadFile(JSON.stringify(data, null, 2), fileName, 'application/json')
       }
 
@@ -246,7 +246,7 @@ export default function ReportsPage() {
     try {
       const data = await template.fetch()
       const timestamp = new Date().toLocaleString()
-      const logoUrl = window.location.origin + '/agentland-logo.jpeg'
+      const logoUrl = window.location.origin + '/langtrail-logo.jpeg'
 
       // Resolve rows (same logic as CSV branch)
       const anyData = data as Record<string, unknown>
@@ -284,7 +284,7 @@ export default function ReportsPage() {
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Agentland \u2014 ${esc(template.label)} \u2014 ${fmtDate()}</title>
+  <title>LangTrail \u2014 ${esc(template.label)} \u2014 ${fmtDate()}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:11px;color:#1e293b;background:#fff}
@@ -340,16 +340,16 @@ export default function ReportsPage() {
 
   <div class="hdr">
     <div class="hdr-left">
-      <img class="logo" src="${logoUrl}" alt="Agentland" onerror="this.style.display='none'" />
+      <img class="logo" src="${logoUrl}" alt="LangTrail" onerror="this.style.display='none'" />
       <div>
-        <div class="brand">Agentland<span>.</span></div>
-        <div class="brand-sub">AI OSS &nbsp;&middot;&nbsp; AI Agent Observability</div>
+        <div class="brand">LangTrail<span>.</span></div>
+        <div class="brand-sub">Agent Evals &nbsp;&middot;&nbsp; Agent Trajectory Evaluation</div>
       </div>
     </div>
     <div class="hdr-right">
       <div class="rtitle">${esc(template.label)}</div>
       <div class="rmeta">Generated ${esc(timestamp)}</div>
-      <div class="rmeta" style="margin-top:2px;opacity:0.6">agentland.in</div>
+      <div class="rmeta" style="margin-top:2px;opacity:0.6">langtrail</div>
     </div>
   </div>
 
@@ -358,7 +358,7 @@ export default function ReportsPage() {
       <div class="meta-item"><label>Report</label><div class="val">${esc(template.label)}</div></div>
       <div class="meta-item"><label>Total Records</label><div class="val">${rows.length.toLocaleString()}</div></div>
       <div class="meta-item"><label>Exported</label><div class="val">${fmtDate()}</div></div>
-      <div class="meta-item"><label>Source</label><div class="val">Agentland</div></div>
+      <div class="meta-item"><label>Source</label><div class="val">LangTrail</div></div>
     </div>
 
     <div class="section-title">Report Data</div>
@@ -366,7 +366,7 @@ export default function ReportsPage() {
     ${rows.length > 200 ? `<p class="truncation-note">Showing first 200 of ${rows.length.toLocaleString()} records. Export as CSV for full dataset.</p>` : ''}
 
     <div class="footer">
-      <span>Agentland &mdash; AI Agent Observability Platform</span>
+      <span>LangTrail &mdash; Agent Trajectory Evaluation Platform</span>
       <span>Confidential &middot; ${fmtDate()}</span>
     </div>
   </div>
@@ -443,7 +443,7 @@ export default function ReportsPage() {
         {/* OSS Templates */}
         <div>
           <h3 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
-            Agentland Reports
+            LangTrail Reports
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {TEMPLATES.map(t => {

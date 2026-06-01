@@ -24,6 +24,8 @@ services:
         value: https://api.openai.com
       - key: AGENTLAND_PROXY__UPSTREAM_ANTHROPIC
         value: https://api.anthropic.com
+      - key: AGENTLAND_POLICY_FILE
+        value: config/render-no-policy.yaml
       - key: AGENTLAND_REVIEW_ASSIST_MODEL
         value: gpt-4o-mini
       - key: AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY
@@ -50,6 +52,8 @@ services:
         value: https://api.openai.com
       - key: AGENTLAND_PROXY__UPSTREAM_ANTHROPIC
         value: https://api.anthropic.com
+      - key: AGENTLAND_POLICY_FILE
+        value: config/render-no-policy.yaml
       - key: AGENTLAND_REVIEW_ASSIST_MODEL
         value: gpt-4o-mini
       - key: AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY

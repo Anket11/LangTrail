@@ -61,12 +61,14 @@ services:
     name: langtrail-dashboard
     runtime: static
     rootDir: dashboard
-    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile && pnpm build
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
+      - key: NODE_VERSION
+        value: 20
       - key: VITE_API_BASE_URL
         value: https://langtrail-api.onrender.com

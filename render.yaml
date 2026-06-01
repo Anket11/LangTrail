@@ -1,0 +1,73 @@
+databases:
+  - name: langtrail-db
+    databaseName: langtrail
+    user: langtrail
+    plan: free
+
+services:
+  - type: web
+    name: langtrail-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: AGENTLAND_DATABASE_URL
+        fromDatabase:
+          name: langtrail-db
+          property: connectionString
+      - key: AGENTLAND_API_PORT
+        value: 10000
+      - key: AGENTLAND_PROXY_PORT
+        value: 4000
+      - key: AGENTLAND_PROXY__UPSTREAM_OPENAI
+        value: https://api.openai.com
+      - key: AGENTLAND_PROXY__UPSTREAM_ANTHROPIC
+        value: https://api.anthropic.com
+      - key: AGENTLAND_REVIEW_ASSIST_MODEL
+        value: gpt-4o-mini
+      - key: AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY
+        sync: false
+      - key: AGENTLAND_LOG_LEVEL
+        value: info
+
+  - type: web
+    name: langtrail-proxy
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: AGENTLAND_DATABASE_URL
+        fromDatabase:
+          name: langtrail-db
+          property: connectionString
+      - key: AGENTLAND_PROXY_PORT
+        value: 10000
+      - key: AGENTLAND_API_PORT
+        value: 4001
+      - key: AGENTLAND_PROXY__UPSTREAM_OPENAI
+        value: https://api.openai.com
+      - key: AGENTLAND_PROXY__UPSTREAM_ANTHROPIC
+        value: https://api.anthropic.com
+      - key: AGENTLAND_REVIEW_ASSIST_MODEL
+        value: gpt-4o-mini
+      - key: AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY
+        sync: false
+      - key: AGENTLAND_LOG_LEVEL
+        value: info
+
+  - type: web
+    name: langtrail-dashboard
+    runtime: static
+    plan: free
+    rootDir: dashboard
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://langtrail-api.onrender.com

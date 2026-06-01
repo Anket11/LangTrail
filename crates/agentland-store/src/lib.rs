@@ -18,7 +18,7 @@ pub mod reviews;
 
 // ── Top-level re-exports ──────────────────────────────────────────────────────
 
-pub use db::{connect, health_check, StorePool};
+pub use db::{connect, health_check, run_migrations, StorePool};
 
 // Filter types
 pub use agents::AgentFilter;

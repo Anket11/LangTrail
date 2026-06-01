@@ -36,6 +36,45 @@ pub async fn connect(cfg: &DatabaseConfig) -> Result<StorePool, sqlx::Error> {
     Ok(pool)
 }
 
+/// Apply bundled SQL migrations.
+///
+/// Hosted databases start empty, so deployment should not depend on a separate
+/// manual `psql` step. A transaction-scoped advisory lock prevents duplicate
+/// migration work when multiple services boot against the same database.
+pub async fn run_migrations(pool: &StorePool) -> Result<(), sqlx::Error> {
+    const MIGRATIONS: &[(&str, &str)] = &[
+        ("001_create_events", include_str!("../../../init/001_create_events.sql")),
+        ("002_create_agents", include_str!("../../../init/002_create_agents.sql")),
+        ("003_create_costs", include_str!("../../../init/003_create_costs.sql")),
+        (
+            "004_create_hypertables",
+            include_str!("../../../init/004_create_hypertables.sql"),
+        ),
+        ("005_create_indexes", include_str!("../../../init/005_create_indexes.sql")),
+        ("006_budget_daily", include_str!("../../../init/006_budget_daily.sql")),
+        ("007_budget_config", include_str!("../../../init/007_budget_config.sql")),
+        ("008_create_projects", include_str!("../../../init/008_create_projects.sql")),
+        (
+            "009_create_trajectory_reviews",
+            include_str!("../../../init/009_create_trajectory_reviews.sql"),
+        ),
+    ];
+
+    let mut tx = pool.begin().await?;
+    sqlx::query("SELECT pg_advisory_xact_lock(728519540001)")
+        .execute(&mut *tx)
+        .await?;
+
+    for (name, sql) in MIGRATIONS {
+        tracing::info!(migration = *name, "applying database migration");
+        sqlx::raw_sql(sql).execute(&mut *tx).await?;
+    }
+
+    tx.commit().await?;
+    tracing::info!("database migrations applied");
+    Ok(())
+}
+
 /// Run a connectivity check against the database.
 pub async fn health_check(pool: &StorePool) -> Result<(), sqlx::Error> {
     sqlx::query("SELECT 1").execute(pool).await?;

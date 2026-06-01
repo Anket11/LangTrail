@@ -51,6 +51,17 @@ async fn main() -> anyhow::Result<()> {
     let pool = match pool_result {
         Ok(p) => {
             tracing::info!("PostgreSQL pool established");
+            if std::env::var("AGENTLAND_RUN_MIGRATIONS")
+                .map(|value| value.to_lowercase() != "false")
+                .unwrap_or(true)
+            {
+                if let Err(e) = agentland_store::run_migrations(&p).await {
+                    tracing::warn!(
+                        error = %e,
+                        "database migrations failed; proxy continues in fail-open mode"
+                    );
+                }
+            }
             Some(p)
         }
         Err(e) => {

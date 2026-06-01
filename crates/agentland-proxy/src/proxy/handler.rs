@@ -35,6 +35,14 @@ pub async fn proxy_handler(
     let start = Instant::now();
     let (parts, body) = req.into_parts();
 
+    if matches!(parts.uri.path(), "/health" | "/ready") {
+        return Ok(Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .body(Full::new(Bytes::from_static(b"{\"status\":\"ok\"}")))
+            .unwrap());
+    }
+
     // ── Protocol detection (hot path, sync) ───────────────────────────────────
     let protocol = detect_protocol_from_parts(&parts);
 

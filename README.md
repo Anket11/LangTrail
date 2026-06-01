@@ -1,684 +1,249 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Agentland-AI%20Agent%20Governance-8B5CF6?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPjwvc3ZnPg==&logoColor=white" alt="Agentland" />
-</p>
+# LangTrail
 
-<h1 align="center">🛡️ Agentland</h1>
+SDK-free agent trajectory capture and human-in-the-loop evaluation.
 
-<p align="center">
-  <b>Open-Source AI Agent Observability, Governance & Compliance Platform</b>
-</p>
+LangTrail is a Rust-based reverse proxy for AI agent traffic. It sits between agents and LLM providers, captures each request/response, and turns raw agent runs into structured trajectories that can be reviewed, scored, and exported as training or evaluation datasets.
 
-<p align="center">
-  <i>Know what your AI agents are doing — before your auditor asks.</i>
-</p>
+## What It Does
 
-<br/>
+- Captures OpenAI and Anthropic-compatible traffic without SDK changes or code instrumentation.
+- Logs requests, responses, token usage, latency, estimated cost, model metadata, and tool calls.
+- Groups events into agent trajectories using session and agent identifiers.
+- Provides a React dashboard for inspecting events, reviewing trajectories, and saving human labels.
+- Uses an LLM-assisted review layer to suggest critiques, labels, failure types, confidence scores, and quality signals.
+- Keeps humans as the final decision-maker before labels are saved.
+- Stores trajectories and reviews in PostgreSQL/TimescaleDB for querying and export.
 
-<p align="center">
-  <b>⭐️ If you find Agentland useful, <a href="https://github.com/jaiswal-naman/agentland">please consider giving us a star!</a> It helps the open-source project grow. ⭐️</b>
-</p>
+## Core Workflow
 
-<p align="center">
-  Built with ❤️ by <a href="https://github.com/jaiswal-naman"><b>Naman</b></a>
-</p>
+```text
+AI Agent
+  |
+  | OpenAI/Anthropic-compatible request
+  v
+LangTrail Proxy
+  |
+  | forwards request + captures response
+  v
+LLM Provider
 
-<p align="center">
-  <a href="https://agentland.in"><img src="https://img.shields.io/badge/Website-agentland.in-8B5CF6?style=flat-square&logo=globe&logoColor=white" alt="Website" /></a>
-  <a href="https://x.com/agentlandai"><img src="https://img.shields.io/badge/X%20(Twitter)-black?style=flat-square&logo=x&logoColor=white" alt="X (Twitter)" /></a>
-  <a href="http://linkedin.com/company/agentland"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>
-  <a href="https://discord.gg/kYa8SqQd"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord" /></a>
-</p>
+Captured events -> PostgreSQL/TimescaleDB -> Review Dashboard -> Human labels -> Dataset export
+```
 
-<p align="center">
-  <a href="#-quick-start"><img src="https://img.shields.io/badge/Setup-2%20Minutes-00C853?style=flat-square" alt="Setup Time" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square" alt="License" /></a>
-  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/Rust-1.75+-DEA584?style=flat-square&logo=rust&logoColor=white" alt="Rust" /></a>
-  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" /></a>
-  <a href="https://www.timescale.com"><img src="https://img.shields.io/badge/TimescaleDB-PG16-FDB515?style=flat-square&logo=postgresql&logoColor=white" alt="TimescaleDB" /></a>
-  <a href="https://github.com/jaiswal-naman/agentland/actions/workflows/ci.yml"><img src="https://github.com/jaiswal-naman/agentland/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="https://ghcr.io/jaiswal-naman/agentland"><img src="https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" /></a>
-</p>
+## Quick Start
 
-<p align="center">
-  <a href="#-quick-start"><b>Getting Started</b></a> ·
-  <a href="https://github.com/jaiswal-naman/agentland/issues"><b>Issues</b></a> ·
-  <a href="#-agentland-platform-enterprise"><b>Enterprise</b></a>
-</p>
+Requires Docker and Docker Compose.
 
-<br/>
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
 
-<p align="center">
-  <img src="imgonline-com-ua-GIF-animation-2aVXJx6VtOK.gif" alt="Agentland Dashboard Demo" width="800" />
-</p>
+Services:
 
----
+| Service | Port | Purpose |
+| --- | --- | --- |
+| Proxy | `4000` | Route agent LLM calls through this service |
+| API | `4001` | REST API used by the dashboard |
+| Dashboard | `3000` | Web UI for traces, costs, agents, and reviews |
+| PostgreSQL/TimescaleDB | `5432` | Event and review storage |
 
-## 🎯 What is Agentland?
+Health checks:
 
-Agentland is a **transparent reverse proxy** that sits between your AI agents and their APIs (OpenAI, Anthropic, etc.). It captures every request and response — **without touching your agent code**.
+```bash
+curl http://localhost:4001/health
+curl http://localhost:4001/ready
+```
 
-**One env var. Zero code changes. Full visibility.**
+## Route Agent Traffic Through LangTrail
+
+For OpenAI-compatible clients:
 
 ```bash
 export OPENAI_BASE_URL=http://localhost:4000/proxy/openai/v1
-# That's it. Your agents keep working exactly as before.
+export OPENAI_API_KEY=sk-...
 ```
 
-Now every AI call is automatically **logged**, **costed**, **scanned for PII**, and **attributed** to the agent that made it.
-
-```text
-  ┌─────────────────┐       ┌────────────────────┐       ┌───────────────────┐
-  │                 │       │   🛡️ Agentland  │       │                   │
-  │   Your Agents   │ ────► │     (:4000)        │ ────► │  OpenAI / Claude  │
-  │                 │       └────────┬───────────┘       │                   │
-  └─────────────────┘                │                   └───────────────────┘
-                                     ▼
-                            ┌────────────────┐
-                            │  PostgreSQL    │
-                            │  & Dashboard   │
-                            └────────────────┘
-```
-
-## 🌟 Why Agentland?
-
-- **Zero Friction** — No SDKs to install. Just change one environment variable (`OPENAI_BASE_URL`).
-- **Complete Autonomy** — Agents are auto-discovered. No manual registration required.
-- **Audit-Ready** — Cryptographically hashes every event in a Merkle chain for tamper evidence.
-- **Privacy First** — Scans and flags 5 types of PII locally. Your data never leaves your infrastructure.
-
-<br/>
-
----
-
-## ✨ Core Features
-
-| Feature                          | What it does                                                                          |
-| -------------------------------- | ------------------------------------------------------------------------------------- |
-| 🔍 **Agent Auto-Discovery**       | Every agent is automatically detected and catalogued — no manual registration, no SDK |
-| 📋 **Full Event Logging**         | Every request/response captured with model, tokens, cost, latency, and tool calls     |
-| 💰 **Cost Attribution**           | Track AI spend by agent, model, and time period — no more surprise bills              |
-| 🔐 **PII Detection**              | Flags emails, phone numbers, SSNs, credit cards, and IPs in agent traffic             |
-| 🔗 **Tamper-Evident Audit Trail** | SHA-256 Merkle hash chain proves event ordering and integrity                         |
-| 📊 **Real-Time Dashboard**        | Overview, agents, events, costs, budgets, projects, and compliance reports            |
-| 📡 **Streaming Support**          | Full SSE and chunked transfer support with minimal latency overhead                   |
-| ⚙️ **Policy Engine**              | YAML-based rules to allow, block, or alert on agent behaviors                         |
-
-<details>
-<summary><b>View deep-dive capabilities</b></summary>
-<br/>
-
-- **Agent Identity & Tracking**: Tracks source IP, active status, error counts, and last models used.
-- **Tamper Evidence Fields**: `session_id`, `timestamp`, `lineage_hash`, and `compliance_tag` are mandatory on every request.
-- **Streaming Pipeline**: Tees SSE streams with under 5ms (p99) latency overhead using a Rust `hyper` hot-path.
-- **Async Write Buffer**: Fire-and-forget channel batches writes to TimescaleDB every 100ms so I/O never blocks agent traffic.
-- **Reporting**: Generates artifacts ready for SOC 2, HIPAA, EU AI Act, and FINRA auditors.
-
-</details>
-
-**Supported protocols:** OpenAI · Anthropic · MCP · A2A · Custom HTTP
-
-<br/>
-
----
-
-## 🚀 Quick Start
-
-> **Requires:** [Docker](https://docker.com) & Docker Compose v2
-
-### Option A: One-Line Install
+For Anthropic-compatible clients:
 
 ```bash
-# Linux / macOS
-curl -sSL https://raw.githubusercontent.com/jaiswal-naman/agentland/main/install.sh | bash
-
-# Windows (PowerShell as Admin)
-iwr -useb https://raw.githubusercontent.com/jaiswal-naman/agentland/main/install.ps1 | iex
+export ANTHROPIC_BASE_URL=http://localhost:4000/proxy/anthropic/v1
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-### Option B: Pre-built Docker Images (no Rust toolchain needed)
-
-Images are published to GitHub Container Registry on every push to `main`:
+Optional agent identifier:
 
 ```bash
-# Pull the proxy
-docker pull ghcr.io/jaiswal-naman/agentland:latest
-
-# Pull the dashboard
-docker pull ghcr.io/jaiswal-naman/agentland-dashboard:latest
+x-agentland-agent-id: research-agent
 ```
 
-Both images are multi-platform (`linux/amd64` + `linux/arm64`). Then start everything with:
+## Example: Python OpenAI SDK
 
-```bash
-git clone https://github.com/jaiswal-naman/agentland.git
-cd agentland
-docker compose -f docker/docker-compose.yml up -d
-```
-
-### Option C: Clone & Build from Source
-
-```bash
-git clone https://github.com/jaiswal-naman/agentland.git
-cd agentland
-docker compose -f docker/docker-compose.yml up -d
-```
-
-### What starts
-
-| Service         | Port   | Purpose                        |
-| --------------- | ------ | ------------------------------ |
-| **Proxy**       | `4000` | Route your agents here         |
-| **REST API**    | `4001` | Dashboard reads data from here |
-| **Dashboard**   | `3000` | Web UI — open in browser       |
-| **TimescaleDB** | `5432` | Event storage (PostgreSQL 16)  |
-
-### 🔌 Add Agentland to Your Existing Agent Setup (Step-by-Step)
-
-Agentland works as a **transparent reverse proxy**. You change **one line** in your existing code — the API base URL — and every request flows through Agentland for logging, cost tracking, and compliance. **Your agent code, prompts, and logic stay exactly the same.**
-
-> **How it works:** Instead of your agent calling `api.openai.com` directly, it calls `localhost:4000` (Agentland). Agentland logs the request and forwards it to the real API. The response comes back through Agentland and is returned to your agent unchanged.
-
----
-
-#### Step 1 — Make sure Agentland is running
-
-```bash
-# If you haven't started it yet:
-docker compose -f docker/docker-compose.yml up -d
-
-# Verify all services are up:
-curl http://localhost:4001/health   # → {"status":"ok"}
-curl http://localhost:4001/ready    # → {"status":"ready"}
-```
-
-You should see all 4 services running (Proxy on `:4000`, API on `:4001`, Dashboard on `:3000`, TimescaleDB on `:5432`).
-
----
-
-#### Step 2 — Change ONE line in your agent code
-
-Pick your framework below. Each example shows the **exact line** you need to change.
-
-<details open>
-<summary><b>🐍 Python — OpenAI SDK</b></summary>
-
-**❌ BEFORE (direct to OpenAI):**
-```python
-from openai import OpenAI
-
-client = OpenAI(api_key="sk-...")
-response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Hello"}]
-)
-```
-
-**✅ AFTER (through Agentland):**
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="sk-...",                                                   # ← keep your real key
-    base_url="http://localhost:4000/proxy/openai/v1",                   # ← ADD THIS LINE
-    default_headers={"x-agentland-agent-id": "my-agent-name"}       # ← OPTIONAL: name your agent
+    api_key="sk-...",
+    base_url="http://localhost:4000/proxy/openai/v1",
+    default_headers={"x-agentland-agent-id": "research-agent"},
 )
+
 response = client.chat.completions.create(
     model="gpt-4",
-    messages=[{"role": "user", "content": "Hello"}]
-)
-# Everything else stays exactly the same!
-```
-
-**What changed?** Only 2 lines added to the `OpenAI()` constructor: `base_url` and optionally `default_headers`. The rest of your code is untouched.
-
-</details>
-
-<details>
-<summary><b>🐍 Python — Anthropic SDK</b></summary>
-
-**❌ BEFORE (direct to Anthropic):**
-```python
-from anthropic import Anthropic
-
-client = Anthropic(api_key="sk-ant-...")
-message = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Hello"}]
+    messages=[{"role": "user", "content": "Summarize this document"}],
 )
 ```
 
-**✅ AFTER (through Agentland):**
-```python
-from anthropic import Anthropic
+## Human Review Flow
 
-client = Anthropic(
-    api_key="sk-ant-...",                                                # ← keep your real key
-    base_url="http://localhost:4000/proxy/anthropic/v1",                 # ← ADD THIS LINE
-    default_headers={"x-agentland-agent-id": "my-claude-agent"}      # ← OPTIONAL
-)
-message = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Hello"}]
-)
+1. Agent calls flow through the proxy.
+2. LangTrail captures request/response events and writes them asynchronously.
+3. Events are grouped into trajectories by session.
+4. Reviewers open a trajectory in the dashboard.
+5. The LLM assistant suggests a label, critique, failure type, confidence score, and quality signals.
+6. A human reviewer approves or edits the final label.
+7. Reviewed trajectories can be exported for RLHF, preference data, and AI agent evaluation workflows.
+
+## Review Labels
+
+Supported trajectory labels:
+
+- `good`
+- `bad`
+- `needs_review`
+
+Supported failure types:
+
+- `bad_answer`
+- `bad_tool_use`
+- `hallucination`
+- `inefficient`
+- `unsafe`
+- `other`
+
+## Tech Stack
+
+Backend:
+
+- Rust
+- Tokio
+- Hyper
+- Axum
+- Tower
+- Reqwest
+- Serde
+- SQLx
+
+Frontend:
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Query
+- React Router
+- Recharts
+
+Data and infrastructure:
+
+- PostgreSQL
+- TimescaleDB
+- Docker
+- Docker Compose
+- Kubernetes manifests
+- Prometheus metrics
+
+AI protocols and integrations:
+
+- OpenAI-compatible APIs
+- Anthropic-compatible APIs
+- MCP
+- A2A
+- Server-Sent Events streaming
+
+## API Surface
+
+The dashboard uses REST APIs exposed by the Rust backend.
+
+Key review endpoints:
+
+```text
+GET  /api/v1/reviews/trajectories
+GET  /api/v1/reviews/trajectories/:session_id
+POST /api/v1/reviews/trajectories/:session_id
+POST /api/v1/reviews/trajectories/:session_id/assist
 ```
 
-**What changed?** Added `base_url` pointing to Agentland's Anthropic proxy endpoint.
+Other API areas:
 
-</details>
+- Events
+- Agents
+- Costs
+- Projects
+- Budgets
+- Reports
+- Health checks
+- Metrics
 
-<details>
-<summary><b>🐍 Python — LangChain</b></summary>
+## Project Structure
 
-**❌ BEFORE:**
-```python
-from langchain_openai import ChatOpenAI
-
-llm = ChatOpenAI(model="gpt-4", api_key="sk-...")
-response = llm.invoke("Hello")
+```text
+.
+├── crates/
+│   ├── agentland-common/       # Shared types, config, protocol parsing
+│   ├── agentland-store/        # PostgreSQL/TimescaleDB storage layer
+│   ├── agentland-proxy/        # Reverse proxy, REST API, review handlers
+│   ├── agentland-cli/          # Command-line interface
+│   └── agentland-reports/      # Report generation utilities
+├── dashboard/                  # React + TypeScript dashboard
+├── docker/                     # Dockerfiles and Compose configs
+├── init/                       # SQL migrations
+├── k8s/                        # Kubernetes manifests
+├── config/                     # Runtime config examples
+└── scripts/                    # Setup, seed, test, and verification scripts
 ```
 
-**✅ AFTER (through Agentland):**
-```python
-from langchain_openai import ChatOpenAI
+## Local Development
 
-llm = ChatOpenAI(
-    model="gpt-4",
-    api_key="sk-...",
-    base_url="http://localhost:4000/proxy/openai/v1",              # ← ADD THIS LINE
-    default_headers={"x-agentland-agent-id": "langchain-agent"} # ← OPTIONAL
-)
-response = llm.invoke("Hello")
-```
-
-**What changed?** Added `base_url` and optionally `default_headers` to the `ChatOpenAI()` constructor.
-
-</details>
-
-<details>
-<summary><b>📦 Node.js — OpenAI SDK</b></summary>
-
-**❌ BEFORE:**
-```javascript
-import OpenAI from "openai";
-
-const client = new OpenAI({ apiKey: "sk-..." });
-const completion = await client.chat.completions.create({
-  model: "gpt-4",
-  messages: [{ role: "user", content: "Hello" }],
-});
-```
-
-**✅ AFTER (through Agentland):**
-```javascript
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: "sk-...",
-  baseURL: "http://localhost:4000/proxy/openai/v1",                   // ← ADD THIS LINE
-  defaultHeaders: { "x-agentland-agent-id": "my-node-agent" },    // ← OPTIONAL
-});
-const completion = await client.chat.completions.create({
-  model: "gpt-4",
-  messages: [{ role: "user", content: "Hello" }],
-});
-```
-
-**What changed?** Added `baseURL` and optionally `defaultHeaders` to the constructor.
-
-</details>
-
-<details>
-<summary><b>📦 Node.js — LangChain</b></summary>
-
-**❌ BEFORE:**
-```javascript
-import { ChatOpenAI } from "@langchain/openai";
-const model = new ChatOpenAI({ openAIApiKey: "sk-..." });
-```
-
-**✅ AFTER (through Agentland):**
-```javascript
-import { ChatOpenAI } from "@langchain/openai";
-const model = new ChatOpenAI({
-  openAIApiKey: "sk-...",
-  configuration: {
-    baseURL: "http://localhost:4000/proxy/openai/v1",                 // ← ADD THIS LINE
-    defaultHeaders: { "x-agentland-agent-id": "langchain-agent" } // ← OPTIONAL
-  }
-});
-```
-
-**What changed?** Added `configuration.baseURL` and optionally `defaultHeaders`.
-
-</details>
-
-<details>
-<summary><b>🤖 Python — CrewAI</b></summary>
-
-**❌ BEFORE:**
-```python
-from crewai import Agent, LLM
-
-llm = LLM(model="gpt-4", api_key="sk-...")
-agent = Agent(role="Researcher", llm=llm, ...)
-```
-
-**✅ AFTER (through Agentland):**
-```python
-from crewai import Agent, LLM
-
-llm = LLM(
-    model="gpt-4",
-    api_key="sk-...",
-    base_url="http://localhost:4000/proxy/openai/v1"  # ← ADD THIS LINE
-)
-agent = Agent(role="Researcher", llm=llm, ...)
-```
-
-**What changed?** Added `base_url` to the `LLM()` constructor.
-
-</details>
-
-<details>
-<summary><b>🌐 Environment Variable Method (works with ANY agent)</b></summary>
-
-If your framework reads `OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL` from the environment, you don't need to change any code at all:
-
-**❌ BEFORE (in your terminal / .env file):**
-```bash
-export OPENAI_API_KEY=sk-...
-# No base URL set → calls go directly to api.openai.com
-```
-
-**✅ AFTER (in your terminal / .env file):**
-```bash
-export OPENAI_API_KEY=sk-...
-export OPENAI_BASE_URL=http://localhost:4000/proxy/openai/v1    # ← ADD THIS LINE
-
-# For Anthropic agents:
-export ANTHROPIC_API_KEY=sk-ant-...
-export ANTHROPIC_BASE_URL=http://localhost:4000/proxy/anthropic/v1  # ← ADD THIS LINE
-```
-
-**What changed?** Added one environment variable. Zero code changes required.
-
-> **Tip:** Add these to your `.env` file so they persist across sessions.
-
-</details>
-
-<details>
-<summary><b>🧪 cURL (for quick testing)</b></summary>
-
-**❌ BEFORE (direct to OpenAI):**
-```bash
-curl https://api.openai.com/v1/chat/completions \
-  -H "Authorization: Bearer sk-..." \
-  -H "Content-Type: application/json" \
-  -d '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'
-```
-
-**✅ AFTER (through Agentland):**
-```bash
-curl http://localhost:4000/proxy/openai/v1/chat/completions \
-  -H "Authorization: Bearer sk-..." \
-  -H "Content-Type: application/json" \
-  -H "x-agentland-agent-id: test-agent" \
-  -d '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'
-```
-
-**What changed?** Replaced `https://api.openai.com` with `http://localhost:4000/proxy/openai`. Added optional agent ID header.
-
-</details>
-
----
-
-#### Step 3 — Open the Dashboard & Verify
-
-1. Open **http://localhost:3000** in your browser
-2. Run your agent (make at least one API call)
-3. You should see the request appear in the dashboard within seconds
-
-**Checklist — you know it's working when:**
-- [ ] Dashboard shows your agent in the **Agents** tab
-- [ ] Each API call appears in the **Events** tab with model, tokens, and cost
-- [ ] The **Overview** page shows live metrics
-
-**Quick health check commands:**
+Start database and services:
 
 ```bash
-# Check all services are running
-curl http://localhost:4001/health   # → {"status":"ok"}
-curl http://localhost:4001/ready    # → {"status":"ready"}
-
-# Test the proxy is forwarding correctly (replace with your key)
-curl http://localhost:4000/proxy/openai/v1/chat/completions \
-  -H "Authorization: Bearer sk-..." \
-  -H "Content-Type: application/json" \
-  -d '{"model":"gpt-4","messages":[{"role":"user","content":"ping"}]}'
+docker compose -f docker/docker-compose.yml up -d
 ```
 
----
-
-#### ❓ Troubleshooting
-
-| Problem                           | Solution                                                                       |
-| --------------------------------- | ------------------------------------------------------------------------------ |
-| `Connection refused` on port 4000 | Make sure Docker containers are running: `docker ps`                           |
-| Agent not appearing in dashboard  | Wait 5 seconds, then refresh. Check `x-agentland-agent-id` header           |
-| API key errors                    | Your real API key must be valid — Agentland forwards it unchanged                 |
-| Slow responses                    | First request may take ~1s (cold start). Subsequent requests add <5ms overhead |
-| Dashboard blank on `:3000`        | Ensure the dashboard container is running: `docker compose logs dashboard`     |
-
-<br/>
-
----
-
-## 🛠️ Build from Source
-
-> For contributors and developers. Most users should use [Quick Start](#-quick-start) above.
-
-### Prerequisites
-
-| Tool               | Version | Install                                                                                            |
-| ------------------ | ------- | -------------------------------------------------------------------------------------------------- |
-| **Rust + Cargo**   | 1.75+   | [rustup.rs](https://rustup.rs) — `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh` |
-| **C/C++ Linker**   | —       | Required by Rust (see below)                                                                       |
-| **Node.js**        | 20 LTS+ | [nodejs.org](https://nodejs.org)                                                                   |
-| **pnpm**           | 9+      | `corepack enable && corepack prepare pnpm@9.15.9 --activate`                                      |
-| **Docker**         | 25+     | [docker.com](https://www.docker.com/get-started/)                                                  |
-| **Docker Compose** | v2+     | Included with Docker Desktop                                                                       |
-
-#### C/C++ Linker (Required for Rust)
-
-Rust needs a system linker to compile. Install one for your platform:
-
-| Platform            | What to install                                                                                                                        | Command                                |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| **Windows**         | [Visual Studio Build Tools 2022](https://visualstudio.microsoft.com/visual-cpp-build-tools/) → "Desktop development with C++" workload | (GUI installer)                        |
-| **macOS**           | Xcode Command Line Tools                                                                                                               | `xcode-select --install`               |
-| **Ubuntu / Debian** | build-essential                                                                                                                        | `sudo apt-get install build-essential` |
-| **Fedora / RHEL**   | gcc                                                                                                                                    | `sudo dnf install gcc`                 |
-
-> ⚠️ **Windows users**: Install the **Build Tools** (not the full Visual Studio IDE). Select the **C++ workload** — the Rust linker (`link.exe`) is bundled inside it.
-
-#### Verify Your Tools
-
-Run this to confirm your environment is ready:
+Run Rust tests:
 
 ```bash
-rustc --version && cargo --version && node --version && pnpm --version && docker --version
+cargo test --workspace
 ```
 
-### Build & Run
+Run dashboard tests:
 
 ```bash
-# 1. Clone
-git clone https://github.com/jaiswal-naman/agentland.git
-cd agentland
-
-# 2. Start the database
-docker compose -f docker/docker-compose.yml up -d postgres
-
-# 3. Build the Rust proxy
-cargo build --release --workspace
-
-# 4. Run the proxy
-export DATABASE_URL=postgres://agentland:agentland_dev@localhost:5432/agentland
-RUST_LOG=info ./target/release/agentland
-
-# 5. Run the dashboard (separate terminal)
 cd dashboard
 pnpm install
+pnpm test
+```
+
+Run the dashboard locally:
+
+```bash
+cd dashboard
 pnpm dev
 ```
 
-### Development with hot-reload
+## Deployment Notes
 
-```bash
-cargo install cargo-watch          # one-time setup
-make docker-up                     # start database
-make dev-proxy                     # proxy with hot-reload (terminal 1)
-make dev-dashboard                 # dashboard with hot-reload (terminal 2)
-```
+LangTrail can run as Docker containers locally or in production-style infrastructure.
 
-### Run tests
+Included deployment assets:
 
-```bash
-cargo test --workspace             # Rust unit tests
-cd dashboard && pnpm test          # Dashboard tests
-make ci                            # Full CI pipeline
-```
+- `docker/docker-compose.yml` for local multi-service deployment.
+- `docker/Dockerfile` for the Rust proxy/API.
+- `docker/Dockerfile.dashboard` for the React dashboard.
+- `k8s/` manifests for Kubernetes deployment.
 
-<br/>
+For a lightweight demo deployment, use:
 
----
-
-## 🗂️ Project Structure
-
-```
-agentland/
-├── crates/
-│   ├── agentland-common/       # Shared types, config, parsing
-│   ├── agentland-store/        # Database layer (sqlx)
-│   ├── agentland-proxy/        # Proxy (hyper) + API (axum) + policy engine
-│   ├── agentland-cli/          # CLI (clap)
-│   └── agentland-reports/      # Compliance report templates
-├── dashboard/                     # React 18 + Vite + Recharts
-├── docker/                        # Dockerfiles + compose
-├── init/                          # SQL migrations
-├── config/                        # Default config + policy examples
-└── scripts/                       # Setup, seed data, verification
-```
-
-<br/>
-
----
-
-## 🏗️ Technical Architecture (Bird's-Eye View)
-
-Here's how Agentland processes your agent traffic with near-zero latency overhead:
-
-```mermaid
-flowchart TB
-    subgraph ClientLayer ["Client Layer"]
-        direction LR
-        Agent["🤖 AI Agents\n(LangChain, CrewAI, etc.)"]
-        Browser["💻 Web Dashboard\n(React + Vite)"]
-    end
-
-    subgraph AgentlandAIOSS ["🛡️ Agentland (Rust)"]
-        direction TB
-        Proxy["⚡ Proxy Server\n(hyper, port 4000)\nHot-path routing"]
-        API["⚙️ Management API\n(axum, port 4001)\nREST & Config"]
-        PolicyEngine["📋 Policy Engine\nYAML Rules & Budgets"]
-        EventChannel["📥 Event Channel\n(Bounded mpsc)"]
-        Writer["📝 Background Writer\nAsync Batching"]
-
-        Proxy <-->|"Hook"| PolicyEngine
-        Proxy -->|"Fire & Forget"| EventChannel
-        EventChannel --> Writer
-    end
-
-    subgraph DataLayer ["Data Layer"]
-        DB[("🐘 PostgreSQL 16\n(TimescaleDB, port 5432)")]
-    end
-
-    subgraph UpstreamLayer ["Upstream Providers"]
-        direction LR
-        OpenAI["OpenAI API"]
-        Anthropic["Anthropic API"]
-    end
-
-    %% Connections
-    Agent <==>|"1. Request/Response"| Proxy
-    Proxy <==>|"2. Forwarded Traffic"| OpenAI
-    Proxy <==>|"2. Forwarded Traffic"| Anthropic
-
-    API <==>|"Reads/Writes Config"| DB
-    Writer -->|"3. Async Batched Writes"| DB
-
-    Browser <==>|"REST API Calls"| API
-
-    classDef proxy fill:#8B5CF6,stroke:#fff,stroke-width:2px,color:#fff
-    classDef db fill:#FDB515,stroke:#fff,stroke-width:2px,color:#000
-    classDef upstream fill:#10a37f,stroke:#fff,stroke-width:2px,color:#fff
-
-    class Proxy,API proxy
-    class DB db
-    class OpenAI,Anthropic upstream
-```
-
-- **Fail-Open Design:** The proxy uses a bounded non-blocking `mpsc` channel. If the database goes down, events are dropped but your agent traffic **continues to flow**.
-- **Minimal Latency:** The hot-path is built directly on `hyper` (bypassing generic web routing overhead) for sub-5ms processing latency.
-- **Asynchronous Storage:** Database writes and aggregations are batched in the background by a dedicated Tokio task.
-
-<br/>
-
----
-
-## 🏢 Agentland Platform (Enterprise)
-
-Agentland gives you **visibility**. When you need **control**:
-
-- **Real-time PII masking** — redact data before it reaches APIs
-- **Policy enforcement** — block budget overruns, require human approval
-- **Compliance reports** — one-click SOC 2, EU AI Act, HIPAA, FINRA
-- **A2A identity** — agent certificates and permission scoping
-- **SSO + RBAC** — Okta, Azure AD, Google Workspace
-- **Unlimited scale** — no caps, multi-cluster, Kubernetes Helm charts
-
-<p align="center">
-  <a href="mailto:hello@agentland.in">Contact sales</a>
-</p>
-
-<br/>
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Quick version:
-
-```bash
-./scripts/setup.sh    # install deps
-make docker-up         # start database
-make dev               # start everything with hot-reload
-```
-
-<br/>
-
----
-
-## 📜 License
-
-[Apache 2.0](LICENSE) — free to use, modify, and distribute. Forever.
-
----
-
-<p align="center">
-  <a href="https://github.com/jaiswal-naman/agentland">⭐ Star on GitHub</a> · <a href="https://github.com/jaiswal-naman/agentland/issues">🐛 Report Bug</a> · <a href="https://github.com/jaiswal-naman/agentland/issues">💡 Request Feature</a> · <a href="CONTRIBUTING.md">🤝 Contribute</a>
-</p>
-
-<p align="center"><sub>Agentland AI is an independent continuation of an earlier collaborative prototype.</sub></p>
+- One containerized Rust backend/proxy.
+- One PostgreSQL/TimescaleDB database.
+- One static React dashboard.

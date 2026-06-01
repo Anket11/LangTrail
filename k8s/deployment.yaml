@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentland
+  namespace: agentland
+  labels:
+    app: agentland
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentland
+  template:
+    metadata:
+      labels:
+        app: agentland
+    spec:
+      containers:
+      - name: agentland
+        image: agentland:latest
+        ports:
+        - containerPort: 4000
+          name: proxy
+        - containerPort: 4001
+          name: api
+        env:
+        - name: AGENTLAND_AI_OSS_LOG
+          value: "agentland_proxy=info"
+        - name: RUST_LOG
+          value: "agentland_proxy=info"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4001
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4001
+          initialDelaySeconds: 5
+          periodSeconds: 10

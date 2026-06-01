@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentland-config
+  namespace: agentland
+data:
+  agentland.toml: |
+    [proxy]
+    port = 4000
+    bind = "0.0.0.0"
+
+    [api]
+    port = 4001
+    bind = "0.0.0.0"
+
+    [database]
+    url = "postgresql://agentland:agentland@postgres:5432/agentland"
+
+    [platform]
+    mtls_proxy_port = 4443

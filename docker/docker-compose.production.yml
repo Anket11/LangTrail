@@ -1,0 +1,78 @@
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  pgdata:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  agentland:
+    driver: bridge
+
+# ── Services ──────────────────────────────────────────────────────────────────
+services:
+
+  # ── PostgreSQL + TimescaleDB ───────────────────────────────────────────────
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: agentland-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agentland}
+      POSTGRES_USER: ${POSTGRES_USER:-agentland}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentland_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-combined.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    networks:
+      - agentland
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentland} -d ${POSTGRES_DB:-agentland}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Agentland Proxy + API ──────────────────────────────────────────────────
+  proxy:
+    image: ghcr.io/jaiswal-naman/agentland:latest
+    container_name: agentland-proxy
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AGENTLAND_DATABASE_URL: postgresql://${POSTGRES_USER:-agentland}:${POSTGRES_PASSWORD:-agentland_dev}@postgres:5432/${POSTGRES_DB:-agentland}
+      AGENTLAND_PROXY_PORT: ${AGENTLAND_PROXY_PORT:-4000}
+      AGENTLAND_API_PORT: ${AGENTLAND_API_PORT:-4001}
+      AGENTLAND_API_KEY: ${AGENTLAND_API_KEY}
+      AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY: ${AGENTLAND_REVIEW_ASSIST_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
+      AGENTLAND_REVIEW_ASSIST_MODEL: ${AGENTLAND_REVIEW_ASSIST_MODEL:-gpt-4o-mini}
+      RUST_LOG: ${RUST_LOG:-agentland_proxy=info}
+    ports:
+      - "${AGENTLAND_PROXY_PORT:-4000}:4000"  # Proxy port
+      - "${AGENTLAND_API_PORT:-4001}:4001"    # Management API
+    networks:
+      - agentland
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Dashboard (React + Vite) ──────────────────────────────────────────────────
+  dashboard:
+    image: ghcr.io/jaiswal-naman/agentland-dashboard:latest
+    container_name: agentland-dashboard
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE_URL: http://localhost:${AGENTLAND_API_PORT:-4001}
+    ports:
+      - "${AGENTLAND_DASHBOARD_PORT:-3000}:3000"
+    networks:
+      - agentland

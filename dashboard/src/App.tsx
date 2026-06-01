@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import { BrowserRouter, Routes, Route, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Radio, Bot, DollarSign, FileText, Wallet, FolderOpen,
-  ClipboardCheck, ChevronRight, Search, Moon, Sun,
+  ClipboardCheck, ChevronRight, Search, Moon, Sun, Menu, X,
 } from 'lucide-react'
 import { useHealth } from './api/hooks'
 
@@ -86,7 +86,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className="w-60 fixed inset-y-0 left-0 glass-panel border-r z-50 flex flex-col shadow-sm"
+      className="hidden md:flex w-60 fixed inset-y-0 left-0 glass-panel border-r z-50 flex-col shadow-sm"
       style={darkMode ? { backgroundColor: '#0a0e18', borderColor: '#2a3347' } : {}}
     >
       <div className="p-5 border-b border-slate-100">
@@ -140,20 +140,29 @@ const Sidebar = () => {
 const Header = () => {
   const { darkMode, toggleDark } = useAuth()
   const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const currentPage = navItems.find(i => i.to === location.pathname)
 
   return (
     <header
-      className="h-14 border-b border-slate-200 bg-white/90 backdrop-blur-sm sticky top-0 z-40 px-6 flex items-center justify-between"
+      className="h-14 border-b border-slate-200 bg-white/90 backdrop-blur-sm sticky top-0 z-40 px-4 sm:px-6 flex items-center justify-between"
       style={darkMode ? { backgroundColor: 'rgba(22,27,39,0.9)', borderColor: '#2a3347' } : {}}
     >
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-slate-400 text-xs">Agent Evals</span>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <span className="font-semibold text-slate-700">{currentPage?.name ?? 'Page'}</span>
+      <div className="flex items-center gap-2 text-sm min-w-0">
+        <button
+          onClick={() => setMenuOpen(open => !open)}
+          className="md:hidden w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600"
+          aria-label="Open navigation"
+        >
+          {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+        <img src="/langtrail-logo.jpeg" alt="LangTrail" className="md:hidden h-7 w-7 rounded-lg object-cover" />
+        <span className="hidden sm:inline text-slate-400 text-xs">Agent Evals</span>
+        <ChevronRight className="hidden sm:block w-3 h-3 text-slate-300" />
+        <span className="font-semibold text-slate-700 truncate">{currentPage?.name ?? 'Page'}</span>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="relative w-56 hidden lg:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
           <input
@@ -175,6 +184,27 @@ const Header = () => {
           <span className="text-primary text-xs font-bold">G</span>
         </div>
       </div>
+      {menuOpen && (
+        <div
+          className="md:hidden absolute left-3 right-3 top-[60px] z-50 rounded-xl border border-slate-200 bg-white shadow-xl p-2"
+          style={darkMode ? { backgroundColor: '#161b27', borderColor: '#2a3347' } : {}}
+        >
+          {navItems.map(item => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) => isActive ? 'sidebar-item-active' : 'sidebar-item'}
+              >
+                <Icon className="w-[18px] h-[18px]" />
+                <span>{item.name}</span>
+              </NavLink>
+            )
+          })}
+        </div>
+      )}
     </header>
   )
 }
@@ -183,7 +213,7 @@ const Header = () => {
 const Layout = () => (
   <div className="flex min-h-screen">
     <Sidebar />
-    <main className="flex-1 ml-60 min-h-screen flex flex-col bg-slate-50">
+    <main className="flex-1 md:ml-60 min-w-0 min-h-screen flex flex-col bg-slate-50">
       <Header />
       <Outlet />
     </main>

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { ClipboardCheck, Download, RefreshCw, Save, Sparkles } from 'lucide-react'
+import { ClipboardCheck, Download, RefreshCw, Save, Sparkles, X } from 'lucide-react'
 import { exportTrajectoryReviews } from '../api/client'
 import { useAssistTrajectoryReview, useSaveTrajectoryReview, useTrajectories, useTrajectory } from '../api/hooks'
 import type { AgentEvent, ReviewAssistSuggestion, SaveTrajectoryReviewRequest, TrajectorySummary } from '../api/types'
@@ -328,8 +328,14 @@ function SessionList({
 
 export default function ReviewPage() {
   const { data, isLoading, refetch } = useTrajectories()
-  const sessions = data?.data ?? []
+  const sessions = (data?.data ?? []).filter(session =>
+    session.agent_id !== 'unknown' ||
+    (session.total_tokens ?? 0) > 0 ||
+    (session.total_cost_usd ?? 0) > 0 ||
+    session.model,
+  )
   const [selectedSession, setSelectedSession] = useState('')
+  const [detailOpen, setDetailOpen] = useState(false)
   const activeSession = selectedSession || sessions[0]?.session_id || ''
   const { data: detailData } = useTrajectory(activeSession)
   const saveReview = useSaveTrajectoryReview()
@@ -406,8 +412,13 @@ export default function ReviewPage() {
     URL.revokeObjectURL(url)
   }
 
+  const selectTrajectory = (id: string) => {
+    setSelectedSession(id)
+    setDetailOpen(true)
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
       <div className="max-w-[1500px] mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -421,15 +432,29 @@ export default function ReviewPage() {
             </button>
             <button onClick={exportJsonl} className="btn-secondary flex items-center gap-1.5 text-xs">
               <Download className="w-3.5 h-3.5" />
-              Export Labelbox JSONL
+              Export JSONL
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-[360px_minmax(0,1fr)] gap-4">
-          <SessionList sessions={sessions} selected={activeSession} onSelect={setSelectedSession} />
+        <div className="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-4">
+          <SessionList sessions={sessions} selected={activeSession} onSelect={selectTrajectory} />
 
-          <div className="space-y-4">
+          <div className={`space-y-4 fixed inset-0 z-50 overflow-y-auto bg-slate-50 p-4 xl:static xl:z-auto xl:overflow-visible xl:bg-transparent xl:p-0 ${detailOpen ? 'block' : 'hidden xl:block'}`}>
+            <div className="xl:hidden flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{activeSummary?.agent_id || 'Trajectory Review'}</p>
+                <p className="text-xs text-slate-400 metric-font truncate">{activeSession || 'No trajectory selected'}</p>
+              </div>
+              <button
+                onClick={() => setDetailOpen(false)}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500"
+                aria-label="Close trajectory review"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <div className="bg-white border border-slate-200 rounded-xl p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -438,7 +463,7 @@ export default function ReviewPage() {
                 </div>
                 <span className={labelClass(activeSummary?.overall_label)}>{activeSummary?.overall_label ?? 'unreviewed'}</span>
               </div>
-              <div className="grid grid-cols-5 gap-3 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400 font-bold">Steps</p>
                   <p className="text-sm font-semibold text-slate-800">{timelineSteps.length}</p>
@@ -468,22 +493,22 @@ export default function ReviewPage() {
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900">Human Label</p>
-                  <p className="text-xs text-slate-400 metric-font">{activeSession || 'Select a trajectory'}</p>
+                  <p className="text-xs text-slate-400 metric-font break-all leading-5">{activeSession || 'Select a trajectory'}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start sm:self-auto">
                   <button
                     onClick={assist}
                     disabled={!activeSession || assistReview.isPending}
-                    className="btn-secondary w-8 h-8 p-0 flex items-center justify-center"
-                    title="Ask AI for review suggestions"
-                    aria-label="Ask AI for review suggestions"
+                    className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 text-primary flex items-center justify-center transition-all hover:bg-primary/15 hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Suggest review"
+                    aria-label="Suggest review"
                   >
-                    <Sparkles className={`w-3.5 h-3.5 ${assistReview.isPending ? 'animate-pulse text-primary' : 'text-primary'}`} />
+                    <Sparkles className={`w-5 h-5 ${assistReview.isPending ? 'animate-pulse' : ''}`} />
                   </button>
-                  <button onClick={save} disabled={!activeSession || saveReview.isPending} className="btn-primary flex items-center gap-1.5 text-xs">
+                  <button onClick={save} disabled={!activeSession || saveReview.isPending} className="btn-primary flex items-center gap-1.5 text-xs whitespace-nowrap">
                     <Save className="w-3.5 h-3.5" />
                     Save Review
                   </button>
@@ -523,7 +548,7 @@ export default function ReviewPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 <label className="text-xs text-slate-500">
                   Overall label
                   <select className="input-field mt-1 w-full" value={overallLabel} onChange={e => setOverallLabel(e.target.value as SaveTrajectoryReviewRequest['overall_label'])}>
@@ -536,7 +561,7 @@ export default function ReviewPage() {
                     {failureTypes.map(v => <option key={v} value={v}>{v.split('_').join(' ')}</option>)}
                   </select>
                 </label>
-                <label className="text-xs text-slate-500 col-span-2">
+                <label className="text-xs text-slate-500 col-span-1 sm:col-span-2">
                   Failure step
                   <select className="input-field mt-1 w-full" value={failureEventId} onChange={e => setFailureEventId(e.target.value)} disabled={overallLabel === 'good'}>
                     <option value="">No specific step</option>
@@ -546,7 +571,7 @@ export default function ReviewPage() {
                     })}
                   </select>
                 </label>
-                <label className="text-xs text-slate-500 col-span-4">
+                <label className="text-xs text-slate-500 col-span-1 sm:col-span-2 xl:col-span-4">
                   Reviewer notes
                   <textarea className="input-field mt-1 w-full min-h-[76px]" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Why is this trajectory good, bad, or worth reviewing?" />
                 </label>
@@ -651,7 +676,7 @@ export default function ReviewPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
                           {step.kind === 'tool' ? (
                             <>
                               <pre className="max-h-56 overflow-auto rounded-md bg-slate-950 text-slate-100 text-[11px] p-2 whitespace-pre-wrap">{JSON.stringify(step.toolCall ?? {}, null, 2)}</pre>

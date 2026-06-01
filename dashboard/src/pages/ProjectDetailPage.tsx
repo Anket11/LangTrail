@@ -51,7 +51,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
       <div className="max-w-[1400px] mx-auto space-y-4">
 
         <Link to="/projects" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary transition-colors mb-2">

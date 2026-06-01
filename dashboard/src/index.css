@@ -89,6 +89,34 @@
   }
 }
 
+@media (max-width: 640px) {
+  html, body, #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  table {
+    min-width: 640px;
+  }
+
+  .table-cell {
+    @apply text-xs py-2 px-3;
+  }
+
+  .stat-card {
+    @apply p-3 rounded-lg;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .input-field {
+    @apply px-2.5 py-1.5 text-xs;
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    DARK MODE  —  elevated-surface system (Linear / Vercel style)
    Palette:

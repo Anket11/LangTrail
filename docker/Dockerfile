@@ -38,6 +38,7 @@ RUN cargo build --release --frozen -p agentland-proxy 2>/dev/null || true
 # Copy real source and rebuild
 # touch ALL source roots so cargo sees them as newer than the stub-compiled
 # .rlib artifacts and recompiles every workspace crate from real source.
+COPY init/ init/
 COPY crates/ crates/
 RUN find crates -name "*.rs" -exec touch {} + && \
     cargo build --release --frozen -p agentland-proxy

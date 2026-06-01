@@ -60,7 +60,6 @@ services:
   - type: web
     name: langtrail-dashboard
     runtime: static
-    plan: free
     rootDir: dashboard
     buildCommand: corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
